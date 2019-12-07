@@ -1,0 +1,54 @@
+{
+    "name": "boomdraw/laravel-canonicalizable",
+    "description": "Canonicalizer package for Laravel",
+    "keywords": [
+        "boomdraw",
+        "laravel",
+        "trait",
+        "eloquent",
+        "canonicalize",
+        "canonicalizer",
+        "canonicalization",
+        "canonicalizable"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://github.com/boomdraw/laravel-canonicalizable",
+    "authors": [
+        {
+            "name": "Ivan Slesarenko",
+            "email": "info@boomdraw.com",
+            "homepage": "https://boomdraw.com",
+            "role": "Owner"
+        }
+    ],
+    "support": {
+        "email": "info@boomdraw.com"
+    },
+    "require": {
+        "php" : "^7.4",
+        "boomdraw/canonicalizer": "^1.0",
+        "illuminate/database": "^6.0",
+        "illuminate/support": "^6.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^4.0",
+        "phpunit/phpunit": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Boomdraw\\Canonicalizable\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Boomdraw\\Canonicalizable\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
