@@ -29,6 +29,23 @@ Via Composer
 $ composer require boomdraw/laravel-canonicalizable
 ```
 
+### Lumen
+
+Uncomment the following line in the bootstrap file:
+
+```php
+// bootstrap/app.php:
+$app->withEloquent();
+$app->withFacades();
+```
+
+Register `CanonicalizerServiceProvider`
+
+```php
+// bootstrap/app.php:
+$app->register(Boomdraw\Canonicalizer\CanonicalizerServiceProvider::class);
+```
+
 ## Usage
 
 Your Eloquent models should use the `Boomdraw\Canonicalizable\HasCanonical` trait,
@@ -147,7 +164,7 @@ public function getCanonicalFields() : CanonicalFieldsCollection
 }
 ```
 
-The trait will look for method canonicalizeOther(string $string) in the model,
+The trait will look for method `canonicalizeOther(string $string)` in the model and `other(string $string)` method in the 
 [`boomdraw/canonicalizer`](https://github.com/boomdraw/canonicalizer) and it's
 [macroses](https://github.com/boomdraw/canonicalizer#canonicalizermacro). 
 
@@ -169,10 +186,31 @@ public function getCanonicalFields() : CanonicalFieldsCollection
 
 The type will be ignored if the `callback` function provided.
 
+You can pass additional arguments to the type based method by providing an array of arguments in the type method.
+
+```php
+public function getCanonicalFields() : CanonicalFieldsCollection
+{
+    return CanonicalFieldsCollection::create()
+        ->addField(
+            CanonicalField::create()
+                ->from('name')
+                ->type('custom', [$arg1, $arg2])
+                ->callback(function($string, $arg, $arg2) {
+                    return mb_strtoupper($string.$arg.$arg2);
+                })
+        )->addField(
+             CanonicalField::create()
+                 ->from('name')
+                 ->type('slug', [$separator])
+        );
+}
+```
+
 You can also override the generated canonical just by setting it to another value than the generated canonical.
 
 ```php
-$model = EloquentModel:create(['name' => 'John']); //canonical is now "john"; 
+$model = EloquentModel::create(['name' => 'John']); //canonical is now "john"; 
 $model->name_canonical = 'Ivan';
 $model->save(); //canonical is now "Ivan"; 
 ```
@@ -208,7 +246,7 @@ public function getCanonicalFields() : CanonicalFieldsCollection
 This can be helpful for creating fields that don't change until you explicitly want it to.
 
 ```php
-$model = EloquentModel:create(['name' => 'John']); //canonical is now "john"; 
+$model = EloquentModel::create(['name' => 'John']); //canonical is now "john"; 
 $model->save();
 
 $model->name = 'Ivan';
