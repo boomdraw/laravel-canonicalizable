@@ -25,6 +25,20 @@ trait HasCanonical
     abstract public function getOriginal($key = null, $default = null);
 
     /**
+     * Get the value of the model's primary key.
+     *
+     * @return mixed
+     */
+    abstract public function getKey();
+
+    /**
+     * Get the primary key for the model.
+     *
+     * @return string
+     */
+    abstract public function getKeyName();
+
+    /**
      * Updates canonical field immediately.
      *
      * @param string $fieldName
@@ -124,22 +138,14 @@ trait HasCanonical
     protected function generateCanonical(CanonicalField $field): ?string
     {
         $data = data_get($this, $field->from, '');
-
+        $args = $field->args;
+        array_unshift($args, $data);
         if (null !== $callback = $field->callback) {
-            return $callback($data);
+            return call_user_func($callback, ...$args);
         }
+        $callable = $this->determineCallable($field->type);
 
-        if ('default' !== $field->type) {
-            $method = 'canonicalize'.Str::studly($field->type);
-            $class = $this->determineClassForMethod($method);
-        }
-
-        if (empty($method) || empty($class)) {
-            $class = Canonicalizer::class;
-            $method = 'canonicalize';
-        }
-
-        return call_user_func([$class, $method], $data);
+        return call_user_func($callable, ...$args);
     }
 
     /**
@@ -155,7 +161,7 @@ trait HasCanonical
         $originalCanonical = $canonical;
         $i = 1;
         while (empty($canonical) || $this->otherRecordExistsWithCanonical($canonical, $field)) {
-            $canonical = $originalCanonical.$separator.$i++;
+            $canonical = $originalCanonical . $separator . $i++;
         }
 
         return $canonical;
@@ -195,18 +201,24 @@ trait HasCanonical
     }
 
     /**
-     * Determine class for specified method.
+     * Determine callable for specific type.
      *
-     * @param string $method
-     * @return $this|string|null
+     * @param string $type
+     * @return array
      */
-    protected function determineClassForMethod(string $method)
+    protected function determineCallable(string $type): array
     {
-        if (method_exists($this, $method)) {
-            return $this;
+        if ('default' !== $type) {
+            $method = 'canonicalize' . Str::studly($type);
+            if (method_exists($this, $method)) {
+                return [$this, $method];
+            }
+            $method = Str::camel($type);
+            if (Canonicalizer::hasMacro($method) || method_exists(Canonicalizer::getFacadeRoot(), $method)) {
+                return [Canonicalizer::class, $method];
+            }
         }
-        if (Canonicalizer::hasMacro($method) || method_exists(Canonicalizer::getFacadeRoot(), $method)) {
-            return Canonicalizer::class;
-        }
+
+        return [Canonicalizer::class, 'canonicalize'];
     }
 }

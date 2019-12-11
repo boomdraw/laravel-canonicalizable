@@ -15,8 +15,11 @@ class CanonicalField
     /** @var string */
     public string $type = 'default';
 
-    /** @var Closure|null */
-    public ?Closure $callback = null;
+    /** @var array */
+    public array $args = [];
+
+    /** @var callable|null */
+    public $callback = null;
 
     /** @var string|null */
     public ?string $uniqueSeparator = null;
@@ -67,14 +70,16 @@ class CanonicalField
     }
 
     /**
-     * Set field type to determine generator method.
+     * Set field type to determine generator method with specified additional args.
      *
      * @param string $type
-     * @return CanonicalField
+     * @param array $args
+     * @return $this
      */
-    public function type(string $type = 'default'): self
+    public function type(string $type = 'default', array $args = []): self
     {
         $this->type = $type;
+        $this->args = $args;
 
         return $this;
     }
@@ -82,10 +87,10 @@ class CanonicalField
     /**
      * Set a custom canonicalization method to call.
      *
-     * @param Closure $callback
+     * @param callable $callback
      * @return CanonicalField
      */
-    public function callback(Closure $callback): self
+    public function callback(callable $callback): self
     {
         $this->callback = $callback;
 
