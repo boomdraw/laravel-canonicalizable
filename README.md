@@ -102,6 +102,37 @@ class CreateYourEloquentModelTable extends Migration
 }
 ```
 
+By default, the package will generate non-unique canonicalized fields. You can disallow duplicates by calling
+`disallowDuplicate()`.
+
+```php
+public function getCanonicalFields(): CanonicalFieldsCollection
+{
+    return CanonicalFieldsCollection::create()
+        ->addField(
+            CanonicalField::create()
+                ->from('name')
+                ->disallowDuplicate()
+        );
+}
+```
+
+The canonicalized will be made unique by appending `-` and a number.
+
+To add a custom separator between canonicalized and a number, pass it as an arg to `disallowDuplicate()`.
+
+```php
+public function getCanonicalFields(): CanonicalFieldsCollection
+{
+    return CanonicalFieldsCollection::create()
+        ->addField(
+            CanonicalField::create()
+                ->from('name')
+                ->disallowDuplicate('#')
+        );
+}
+```
+
 You can call a custom canonicalization method by providing the field type.
 
 ```php

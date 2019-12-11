@@ -16,6 +16,15 @@ trait HasCanonical
     abstract public function getCanonicalFields(): CanonicalFieldsCollection;
 
     /**
+     * Get the model's original attribute values.
+     *
+     * @param string|null $key
+     * @param mixed $default
+     * @return mixed|array
+     */
+    abstract public function getOriginal($key = null, $default = null);
+
+    /**
      * Updates canonical field immediately.
      *
      * @param string $fieldName
@@ -89,6 +98,9 @@ trait HasCanonical
         }
         $canonical = $this->generateCanonical($field);
         $to = $field->to;
+        if (null !== $separator = $field->uniqueSeparator) {
+            $canonical = $this->makeCanonicalUnique($canonical, $to, $separator);
+        }
         $this->$to = $canonical;
     }
 
@@ -128,6 +140,58 @@ trait HasCanonical
         }
 
         return call_user_func([$class, $method], $data);
+    }
+
+    /**
+     * Make canonical value unique.
+     *
+     * @param string|null $canonical
+     * @param string $field
+     * @param string $separator
+     * @return string
+     */
+    protected function makeCanonicalUnique(?string $canonical, string $field, string $separator): string
+    {
+        $originalCanonical = $canonical;
+        $i = 1;
+        while (empty($canonical) || $this->otherRecordExistsWithCanonical($canonical, $field)) {
+            $canonical = $originalCanonical.$separator.$i++;
+        }
+
+        return $canonical;
+    }
+
+    /**
+     * Check another record with current canonical value existence.
+     *
+     * @param string $canonical
+     * @param string $field
+     * @return bool
+     */
+    protected function otherRecordExistsWithCanonical(string $canonical, string $field): bool
+    {
+        $key = $this->getKey();
+        if ($this->incrementing) {
+            $key ??= '0';
+        }
+        $query = static::where($field, $canonical)
+            ->where($this->getKeyName(), '!=', $key)
+            ->withoutGlobalScopes();
+        if ($this->usesSoftDeletes()) {
+            $query->withTrashed();
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Determine if the model uses SoftDeletes
+     *
+     * @return bool
+     */
+    protected function usesSoftDeletes(): bool
+    {
+        return (bool)in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses($this));
     }
 
     /**

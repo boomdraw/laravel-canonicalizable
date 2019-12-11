@@ -71,6 +71,13 @@ class TestCase extends BaseTestCase
             $table->string('other_field')->nullable();
             $table->string('email_canonical')->nullable();
         });
+        $app['db']->connection()->getSchemaBuilder()->create('test_model_soft_deletes', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('email')->nullable();
+            $table->string('other_field')->nullable();
+            $table->string('email_canonical')->nullable();
+            $table->softDeletes();
+        });
     }
 
     /**

@@ -29,6 +29,84 @@ class HasCanonicalTest extends TestCase
     }
 
     /** @test */
+    public function it_can_handle_null_values_when_creating_unique_canonical()
+    {
+        $model = new class extends TestModel {
+            public function getCanonicalFields(): CanonicalFieldsCollection
+            {
+                return CanonicalFieldsCollection::create()
+                    ->addField(
+                        CanonicalField::create()
+                            ->from('email')
+                            ->disallowDuplicate()
+                    );
+            }
+        };
+        $model->save();
+        $this->assertSame('-1', $model->email_canonical);
+    }
+
+    /** @test */
+    public function it_will_save_an_unique_slug()
+    {
+        $model = new class extends TestModel {
+            public function getCanonicalFields(): CanonicalFieldsCollection
+            {
+                return CanonicalFieldsCollection::create()
+                    ->addField(
+                        CanonicalField::create()
+                            ->from('email')
+                            ->disallowDuplicate()
+                    );
+            }
+        };
+        $model->email = $this->email;
+        $testModel = $model->replicate();
+        $testModel->save();
+        foreach (range(1, 10) as $i) {
+            $testModel = $model->replicate();
+            $testModel->save();
+            $this->assertSame(Canonicalizer::canonicalize($model->email)."-{$i}", $testModel->email_canonical);
+        }
+    }
+
+    /** @test */
+    public function it_will_save_an_unique_slug_with_custom_separator()
+    {
+        $model = new class extends TestModel {
+            public function getCanonicalFields(): CanonicalFieldsCollection
+            {
+                return CanonicalFieldsCollection::create()
+                    ->addField(
+                        CanonicalField::create()
+                            ->from('email')
+                            ->disallowDuplicate('#')
+                    );
+            }
+        };
+        $model->email = $this->email;
+        $testModel = $model->replicate();
+        $testModel->save();
+
+        foreach (range(1, 10) as $i) {
+            $testModel = $model->replicate();
+            $testModel->save();
+            $this->assertSame(Canonicalizer::canonicalize($model->email)."#{$i}", $testModel->email_canonical);
+        }
+    }
+
+    /** @test */
+    public function it_will_save_an_unique_slug_even_when_soft_deletes_are_on()
+    {
+        TestModelSoftDeletes::create(['email' => $this->email, 'deleted_at' => date('Y-m-d h:i:s')]);
+
+        foreach (range(1, 10) as $i) {
+            $model = TestModelSoftDeletes::create(['email' => $this->email, 'deleted_at' => date('Y-m-d h:i:s')]);
+            $this->assertSame(Canonicalizer::canonicalize($model->email)."-{$i}", $model->email_canonical);
+        }
+    }
+
+    /** @test */
     public function it_will_not_change_the_canonical_when_the_source_field_is_not_changed(): void
     {
         $model = TestModel::create(['email' => $this->email]);
