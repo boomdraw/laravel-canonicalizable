@@ -18,6 +18,9 @@ class CanonicalField
     /** @var Closure|null */
     public ?Closure $callback = null;
 
+    /** @var string|null */
+    public ?string $uniqueSeparator = null;
+
     /** @var bool */
     public bool $generateOnCreate = true;
 
@@ -102,13 +105,26 @@ class CanonicalField
     }
 
     /**
-     * Disable canonicalization on update
+     * Disable canonicalization on update.
      *
      * @return CanonicalField
      */
     public function doNotGenerateOnUpdate(): self
     {
         $this->generateOnUpdate = false;
+
+        return $this;
+    }
+
+    /**
+     * Enable unique canonicalization field processing.
+     *
+     * @param string $separator
+     * @return $this
+     */
+    public function disallowDuplicate(string $separator = '-'): self
+    {
+        $this->uniqueSeparator = $separator;
 
         return $this;
     }
