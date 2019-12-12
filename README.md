@@ -134,6 +134,9 @@ public function getCanonicalFields(): CanonicalFieldsCollection
 }
 ```
 
+The canonicalized uniqueness will be checked even if it has been set manually and `doNotGenerateOnUpdate` or
+`doNotGenerateOnCreate` are used.
+
 The canonicalized will be made unique by appending `-` and a number.
 
 To add a custom separator between canonicalized and a number, pass it as an arg to `disallowDuplicate()`.
@@ -210,9 +213,46 @@ public function getCanonicalFields() : CanonicalFieldsCollection
 You can also override the generated canonical just by setting it to another value than the generated canonical.
 
 ```php
-$model = EloquentModel::create(['name' => 'John']); //canonical is now "john"; 
+$model = EloquentModel::create(['name' => 'John']); //The canonical is now "john"; 
 $model->name_canonical = 'Ivan';
-$model->save(); //canonical is now "Ivan"; 
+$model->save(); //The canonical is now "Ivan"; 
+```
+
+To force the canonicalization when a canonical is set manually use `forceCanonicalization()` method.
+
+```php
+public function getCanonicalFields() : CanonicalFieldsCollection
+{
+    return CanonicalFieldsCollection::create()
+        ->addField(
+             CanonicalField::create()
+                 ->from('name')
+                 ->type('slug')
+                 ->forceCanonicalization()
+        );
+}
+...
+$model = EloquentModel::create(['name' => 'John']); //The canonical is now "john"; 
+$model->name_canonical = 'Test User';
+$model->save(); //The canonical is now "test-user"; 
+```
+
+```php
+public function getCanonicalFields() : CanonicalFieldsCollection
+{
+    return CanonicalFieldsCollection::create()
+        ->addField(
+             CanonicalField::create()
+                 ->from('name')
+                 ->to('name')
+                 ->type('slug')
+                 ->forceCanonicalization()
+        );
+}
+...
+$model = EloquentModel::create(['name' => 'John']); //The is now "john"; 
+$model->name = 'Test User';
+$model->save(); //The name is now "test-user"; 
 ```
 
 If you don't want to create the canonical when the model is initially created you can set use the `doNotGenerateOnCreate()` function.
@@ -246,11 +286,11 @@ public function getCanonicalFields() : CanonicalFieldsCollection
 This can be helpful for creating fields that don't change until you explicitly want it to.
 
 ```php
-$model = EloquentModel::create(['name' => 'John']); //canonical is now "john"; 
+$model = EloquentModel::create(['name' => 'John']); //The canonical is now "john"; 
 $model->save();
 
 $model->name = 'Ivan';
-$model->save(); //canonical stays "john"
+$model->save(); //The canonical stays "john"
 ```
 
 If you want to explicitly update the canonical on the model you can call `canonicalize(string $fieldName)` on your model

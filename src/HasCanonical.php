@@ -80,7 +80,7 @@ trait HasCanonical
     protected function generateOnCreate(): void
     {
         $this->getCanonicalFields()->getFields()->each(function ($field) {
-            if ($field->generateOnCreate) {
+            if ($field->generateOnCreate || $this->forceCanonicalization($field)) {
                 $this->addCanonical($field);
             }
         });
@@ -94,10 +94,22 @@ trait HasCanonical
     protected function generateOnUpdate(): void
     {
         $this->getCanonicalFields()->getFields()->each(function ($field) {
-            if ($field->generateOnUpdate) {
+            if ($field->generateOnUpdate || $this->forceCanonicalization($field)) {
                 $this->addCanonical($field);
             }
         });
+    }
+
+    /**
+     * Determine should canonicalization be forced
+     *
+     * @param CanonicalField $field
+     * @return bool
+     */
+    protected function forceCanonicalization(CanonicalField $field): bool
+    {
+        $force = ($field->shouldBeUnique() || $field->forceCanonicalization);
+        return $force && $this->hasCustomCanonicalBeenUsed($field->to);
     }
 
     /**
@@ -107,13 +119,18 @@ trait HasCanonical
      */
     protected function addCanonical(CanonicalField $field): void
     {
-        if ($this->hasCustomCanonicalBeenUsed($field->to)) {
-            return;
-        }
-        $canonical = $this->generateCanonical($field);
         $to = $field->to;
-        if (null !== $separator = $field->uniqueSeparator) {
-            $canonical = $this->makeCanonicalUnique($canonical, $to, $separator);
+        if ($this->hasCustomCanonicalBeenUsed($to)) {
+            $canonical = data_get($this, $to, '');
+            if ($field->forceCanonicalization) {
+                $canonical = $this->generateCanonical($field, $canonical);
+            }
+        } else {
+            $canonical = data_get($this, $field->from, '');
+            $canonical = $this->generateCanonical($field, $canonical);
+        }
+        if ($field->shouldBeUnique()) {
+            $canonical = $this->makeCanonicalUnique($canonical, $to, $field->uniqueSeparator);
         }
         $this->$to = $canonical;
     }
@@ -133,13 +150,13 @@ trait HasCanonical
      * Generate canonical field value.
      *
      * @param CanonicalField $field
+     * @param string|null $string
      * @return string|null
      */
-    protected function generateCanonical(CanonicalField $field): ?string
+    protected function generateCanonical(CanonicalField $field, string $string): ?string
     {
-        $data = data_get($this, $field->from, '');
         $args = $field->args;
-        array_unshift($args, $data);
+        array_unshift($args, $string);
         if (null !== $callback = $field->callback) {
             return call_user_func($callback, ...$args);
         }

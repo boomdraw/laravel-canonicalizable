@@ -14,6 +14,12 @@ class TestCase extends BaseTestCase
     /** @var TestModel */
     protected TestModel $testModel;
 
+    /** @var string */
+    protected $email = 'HelLo.World@HellO.cOM.Nl';
+
+    /** @var string */
+    protected $other_email = 'BlAblABla@GmaIl.cOm';
+
     /**
      * Setup the test environment.
      *

@@ -7,28 +7,40 @@ use Closure;
 class CanonicalField
 {
     /** @var string */
-    public string $from;
+    protected string $from;
 
     /** @var string */
-    public string $to;
+    protected string $to;
 
     /** @var string */
-    public string $type = 'default';
+    protected string $type = 'default';
 
     /** @var array */
-    public array $args = [];
+    protected array $args = [];
 
     /** @var callable|null */
-    public $callback = null;
+    protected $callback = null;
 
     /** @var string|null */
-    public ?string $uniqueSeparator = null;
+    protected ?string $uniqueSeparator = null;
 
     /** @var bool */
-    public bool $generateOnCreate = true;
+    protected bool $generateOnCreate = true;
 
     /** @var bool */
-    public bool $generateOnUpdate = true;
+    protected bool $generateOnUpdate = true;
+
+    /** @var bool */
+    protected bool $forceCanonicalization = false;
+
+    /**
+     * @param $name
+     * @return mixed
+     */
+    public function __get($name)
+    {
+        return $this->$name;
+    }
 
     /**
      * Create new CanonicalField instance.
@@ -132,5 +144,27 @@ class CanonicalField
         $this->uniqueSeparator = $separator;
 
         return $this;
+    }
+
+    /**
+     * Force canonicalization on manual canonical setting
+     *
+     * @return $this
+     */
+    public function forceCanonicalization(): self
+    {
+        $this->forceCanonicalization = true;
+
+        return $this;
+    }
+
+    /**
+     * Determine if the canonicalized should be unique
+     *
+     * @return bool
+     */
+    public function shouldBeUnique(): bool
+    {
+        return null !== $this->uniqueSeparator;
     }
 }
