@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-canonicalizable` will be documented in this file
 
+## 1.3.0 - 2019-12-12
+
+- Add canonicalization forcing
+
 ## 1.2.0 - 2019-12-11
 
 - Update canonicalizer version
